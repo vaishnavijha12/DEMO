@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CSS Features Playground — Glass + 3D</title>
+<style>
+  :root{
+    --hue: 200;
+    --primary: hsl(var(--hue) 80% 50%);
+    --accent: hsl(var(--hue) 80% 65%);
+    --bg-light: linear-gradient(135deg,#fdfbfb 0%,#ebedee 100%);
+    --bg-dark: radial-gradient(circle at 10% 0%, hsl(var(--hue) 40% 20%), hsl(var(--hue) 30% 8%));
+    --glass-bg: rgba(255,255,255,0.55);
+    --glass-border: rgba(255,255,255,0.6);
+    --card-radius: 14px;
+    --gap: 18px;
+    --text-dark: #222;
+    --text-light:#eee;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;line-height:1.4}
+  body{
+    background:var(--bg-light);
+    color:var(--text-dark);
+    transition:background .45s ease,color .45s ease;
+    overflow-x:hidden;
+    min-height:100vh;
+  }
+
+  /* Floating bubbles (keeps from previous) */
+  .bubble{ position:absolute;border-radius:50%; opacity:.28; z-index:0; filter: blur(6px); transition:transform .28s ease-out; }
+  .bubble--a{ width:120px;height:120px; left:6%; background:var(--primary); animation:floatA 28s linear infinite; top:60vh }
+  .bubble--b{ width:90px;height:90px; left:72%; background:var(--accent); animation:floatB 20s linear infinite; top:75vh }
+  .bubble--c{ width:150px;height:150px; left:42%; background:var(--primary); animation:floatC 32s linear infinite; top:80vh }
+  .bubble--d{ width:100px;height:100px; left:86%; background:var(--accent); animation:floatD 22s linear infinite; top:55vh }
+  @keyframes floatA{ from{transform:translateY(120vh) } to{transform:translateY(-30vh) } }
+  @keyframes floatB{ from{transform:translateY(110vh) } to{transform:translateY(-20vh) } }
+  @keyframes floatC{ from{transform:translateY(130vh)} to{transform:translateY(-40vh)} }
+  @keyframes floatD{ from{transform:translateY(115vh)} to{transform:translateY(-25vh)} }
+
+  header{ padding:18px 24px; background:var(--primary); color:#fff; position:sticky; top:0; z-index:20; box-shadow:0 8px 28px rgba(0,0,0,.14) }
+  header h1{ margin:0; font-size:1.25rem; letter-spacing:.2px}
+  main{ max-width:1100px; margin:28px auto; padding:0 18px; position:relative; z-index:10 }
+
+  .grid{ display:grid; gap:var(--gap); grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); align-items:start }
+
+  section.card{
+    background: linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.58));
+    border-radius: var(--card-radius);
+    padding:18px;
+    box-shadow: 0 10px 30px rgba(16,24,40,.12);
+    border:1px solid rgba(255,255,255,.7);
+    backdrop-filter: blur(8px) saturate(110%);
+    transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+  }
+  section.card:hover{ transform: translateY(-6px); box-shadow: 0 22px 48px rgba(15,23,42,.18) }
+
+  h2{ margin:0 0 10px; color:var(--primary) }
+
+  /* ---------- Glassmorphism Card ---------- */
+  .glass-wrap{ display:flex; gap:14px; align-items:center; justify-content:flex-start; flex-direction:column }
+  .glass-card{
+    width:100%;
+    border-radius:14px;
+    padding:18px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.06));
+    border: 1px solid rgba(255,255,255,0.14);
+    box-shadow: 0 8px 30px rgba(2,6,23,0.35);
+    backdrop-filter: blur(10px) saturate(120%);
+    position:relative;
+    overflow:hidden;
+    transition: transform .35s ease, box-shadow .35s ease;
+  }
+  .glass-card:hover{ transform: translateY(-8px) scale(1.01); box-shadow: 0 30px 70px rgba(2,6,23,0.45) }
+  .glass-title{ font-weight:700; margin-bottom:6px; color:var(--primary) }
+  .glass-sub{ color:rgba(0,0,0,0.6); font-size:.95rem; margin-bottom:14px }
+
+  /* accent glow circle inside glass */
+  .glass-glow{
+    position:absolute; right:-40px; top:-30px; width:240px; height:240px; border-radius:50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.14), transparent 40%);
+    transform: rotate(10deg);
+    pointer-events:none;
+  }
+  .glass-row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center }
+
+  .glass-avatar{
+    width:72px; height:72px; border-radius:12px; background:linear-gradient(135deg,var(--primary),var(--accent));
+    box-shadow: 0 8px 26px rgba(34, 197, 94, .12);
+    display:grid; place-items:center; color:#fff; font-weight:700; font-size:1.1rem;
+  }
+  .glass-meta{ flex:1 }
+  .glass-meta p{ margin:0; color:rgba(0,0,0,.65) }
+
+  /* small controls */
+  .controls-row{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap }
+  .btn{ padding:8px 12px; border-radius:9px; border: none; cursor:pointer; background:var(--primary); color:white; font-weight:600; box-shadow: 0 6px 18px rgba(34,197,94,.08) }
+  .btn.ghost{ background: transparent; color:var(--primary); border:1px solid rgba(0,0,0,.06) }
+
+  /* ---------- 3D Card (flip) ---------- */
+  .three-wrap{ perspective:1200px; display:flex; gap:18px; flex-direction:column; align-items:center }
+  .card-3d {
+    width: 260px; height:160px; border-radius:12px; position:relative; transform-style:preserve-3d;
+    transition: transform .9s cubic-bezier(.2,.9,.2,1), box-shadow .3s ease; cursor:pointer;
+  }
+  .card-3d:hover{ transform: rotateY(180deg) rotateX(6deg) translateY(-8px); box-shadow: 0 28px 60px rgba(2,6,23,.35) }
+
+  .face {
+    position:absolute; inset:0; border-radius:12px; display:grid; place-items:center; backface-visibility:hidden;
+    color:white; font-weight:700;
+  }
+  .face.front{ background: linear-gradient(135deg,var(--primary),var(--accent)); }
+  .face.back{ background: linear-gradient(135deg, hsl(calc(var(--hue) + 40) 80% 50%), hsl(calc(var(--hue) + 80) 70% 55%)); transform: rotateY(180deg); padding:12px; text-align:center }
+
+  /* little 3D cube */
+  .cube-wrap{ width:160px; height:160px; perspective:900px; display:grid; place-items:center }
+  .cube{
+    width:100px; height:100px; position:relative; transform-style:preserve-3d; transform: rotateX(-20deg) rotateY(-20deg); transition: transform .9s cubic-bezier(.2,.9,.2,1);
+  }
+  .cube:hover{ transform: rotateX(-30deg) rotateY(40deg) translateY(-6px) }
+  .cube .side{
+    position:absolute; width:100px; height:100px; border: 2px solid rgba(255,255,255,.06); border-radius:8px;
+    display:grid; place-items:center; font-weight:700; color:white;
+  }
+  .cube .front{ transform: translateZ(50px); background:var(--primary) }
+  .cube .back{ transform: rotateY(180deg) translateZ(50px); background:var(--accent) }
+  .cube .right{ transform: rotateY(90deg) translateZ(50px); background: hsl(calc(var(--hue)+20) 70% 45%) }
+  .cube .left{ transform: rotateY(-90deg) translateZ(50px); background: hsl(calc(var(--hue)-20) 70% 45%) }
+  .cube .top{ transform: rotateX(90deg) translateZ(50px); background: hsl(calc(var(--hue)+30) 75% 48%) }
+  .cube .bottom{ transform: rotateX(-90deg) translateZ(50px); background: hsl(calc(var(--hue)-30) 75% 48%) }
+
+  /* responsive tweaks */
+  @media (max-width:720px){
+    .grid{ grid-template-columns: 1fr }
+    .card-3d{ width:220px; height:150px }
+  }
+</style>
+</head>
+<body>
+
+  <!-- floating decorative bubbles -->
+  <div class="bubble bubble--a"></div>
+  <div class="bubble bubble--b"></div>
+  <div class="bubble bubble--c"></div>
+  <div class="bubble bubble--d"></div>
+
+  <header>
+    <h1>CSS Features Playground — Glassmorphism & 3D</h1>
+  </header>
+
+  <main>
+    <div class="grid">
+      <!-- Glassmorphism Card -->
+      <section class="card">
+        <h2>✨ Glassmorphism Card</h2>
+        <div class="glass-wrap">
+          <div class="glass-card" id="glassCard">
+            <div class="glass-glow"></div>
+
+            <div class="glass-row">
+              <div class="glass-avatar">GV</div>
+              <div class="glass-meta">
+                <div class="glass-title">Glassmorphic Panel</div>
+                <p class="glass-sub">A modern frosted interface using <strong>backdrop-filter</strong>, subtle borders and soft shadows.</p>
+              </div>
+            </div>
+
+            <div class="controls-row" style="margin-top:16px">
+              <button class="btn" id="glassAction">Interact</button>
+              <button class="btn ghost" id="glassToggle">Toggle Accent</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3D Transform / Rotate Demo -->
+      <section class="card">
+        <h2>🔄 3D Transform / Rotate Demo</h2>
+        <div class="three-wrap">
+
+          <!-- flipping 3D card -->
+          <div class="card-3d" id="flipCard" title="Hover to flip">
+            <div class="face front">Front</div>
+            <div class="face back">Back — cool content can go here</div>
+          </div>
+
+          <!-- small cube -->
+          <div class="cube-wrap">
+            <div class="cube" id="cube">
+              <div class="side front">F</div>
+              <div class="side back">B</div>
+              <div class="side right">R</div>
+              <div class="side left">L</div>
+              <div class="side top">T</div>
+              <div class="side bottom">Bo</div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- small demo: preserve existing features (variables/playground) -->
+      <section class="card">
+        <h2>🎨 Quick Theme Controls</h2>
+        <p>Hue slider will recolor the components (glass + 3D faces). Try it!</p>
+        <input type="range" id="hueSlider" min="0" max="360" value="200" />
+        <p style="margin-top:10px"><small>Tip: move the mouse near bubbles — they float away.</small></p>
+      </section>
+
+    </div>
+  </main>
+
+  <script>
+    // utility
+    const $ = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+
+    // Hue control binds to CSS variable --hue
+    const hueSlider = $('#hueSlider');
+    hueSlider.addEventListener('input', e=>{
+      document.documentElement.style.setProperty('--hue', e.target.value);
+    });
+
+    // Glass card interactions
+    const glassCard = $('#glassCard');
+    const glassAction = $('#glassAction');
+    const glassToggle = $('#glassToggle');
+
+    glassAction.addEventListener('click', ()=>{
+      // small dynamic pulse
+      glassCard.animate([
+        { transform: 'scale(1)' },
+        { transform: 'scale(1.03)' },
+        { transform: 'scale(1)' }
+      ], { duration: 420, easing: 'ease-out' });
+    });
+
+    let accentOn = true;
+    glassToggle.addEventListener('click', ()=>{
+      accentOn = !accentOn;
+      if(accentOn){
+        glassCard.style.borderColor = 'rgba(255,255,255,0.14)';
+        glassCard.style.boxShadow = '0 8px 30px rgba(2,6,23,0.35)';
+      } else {
+        // stronger colored border using CSS var
+        glassCard.style.borderColor = 'rgba(255,255,255,0.02)';
+        glassCard.style.boxShadow = '0 18px 40px rgba(0,0,0,0.25), 0 6px 18px rgba(34,197,94,0.08)';
+      }
+    });
+
+    // bubbles repel effect (re-usable)
+    const bubbles = $$('.bubble');
+    document.addEventListener('mousemove', e=>{
+      bubbles.forEach(b => {
+        const rect = b.getBoundingClientRect();
+        const bx = rect.left + rect.width/2;
+        const by = rect.top + rect.height/2;
+        const dx = e.clientX - bx;
+        const dy = e.clientY - by;
+        const dist = Math.hypot(dx,dy);
+        const max = 140;
+        if(dist < max){
+          // push away proportional to distance
+          const strength = (max - dist) / max;
+          const angle = Math.atan2(dy, dx);
+          const tx = Math.cos(angle) * (-1) * (40 * strength);
+          const ty = Math.sin(angle) * (-1) * (40 * strength);
+          b.style.transform = `translate(${tx}px, ${ty}px)`;
+        } else {
+          b.style.transform = '';
+        }
+      });
+    });
+
+    // tiny cube rotation on mouse move (parallax)
+    const cube = $('#cube');
+    cube.addEventListener('mousemove', (ev)=>{
+      const r = cube.getBoundingClientRect();
+      const cx = r.left + r.width/2;
+      const cy = r.top + r.height/2;
+      const dx = ev.clientX - cx;
+      const dy = ev.clientY - cy;
+      const ry = dx / 8; // rotateY
+      const rx = -dy / 10; // rotateX
+      cube.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+    });
+    cube.addEventListener('mouseleave', ()=> cube.style.transform = 'rotateX(-20deg) rotateY(-20deg)');
+
+    // flip card: small mouse tilt for depth (optional)
+    const flipCard = $('#flipCard');
+    flipCard.addEventListener('mousemove', (ev)=>{
+      const r = flipCard.getBoundingClientRect();
+      const cx = r.left + r.width/2;
+      const cy = r.top + r.height/2;
+      const dx = ev.clientX - cx;
+      const dy = ev.clientY - cy;
+      const tiltX = dy / 20;
+      const tiltY = -dx / 20;
+      flipCard.style.transform = `rotateY(180deg) rotateX(${tiltX}deg) rotateY(${tiltY+180}deg) translateY(-6px)`;
+    });
+    flipCard.addEventListener('mouseleave', ()=> flipCard.style.transform = '');
+
+    // initialize hues so visuals reflect initial value
+    document.documentElement.style.setProperty('--hue', hueSlider.value);
+  </script>
+</body>
+</html>
